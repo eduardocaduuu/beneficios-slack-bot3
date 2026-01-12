@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  bot-beneficios:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bot-beneficios-alcina
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      # Mount para logs (opcional)
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - bot-network
+
+networks:
+  bot-network:
+    driver: bridge

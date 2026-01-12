@@ -1,0 +1,117 @@
+/**
+ * Configuração e inicialização do Slack App
+ */
+
+import { App, ExpressReceiver, LogLevel } from '@slack/bolt';
+import { config } from '../config/environment';
+import { logger } from '../utils/logger';
+import { registerEventHandlers } from '../handlers/events';
+import { registerCommandHandlers } from '../handlers/commands';
+import { registerActionHandlers } from '../handlers/actions';
+import { startCacheCleanup } from './cacheService';
+
+/**
+ * Cria e configura a aplicação Slack
+ */
+export function createSlackApp(): App {
+  let app: App;
+
+  // Configuração base comum
+  const baseConfig = {
+    token: config.slackBotToken,
+    signingSecret: config.slackSigningSecret,
+    logLevel: config.nodeEnv === 'production' ? LogLevel.INFO : LogLevel.DEBUG,
+  };
+
+  // Socket Mode (recomendado para desenvolvimento)
+  if (config.appMode === 'socket') {
+    logger.info('🔌 Iniciando app em Socket Mode');
+
+    app = new App({
+      ...baseConfig,
+      socketMode: true,
+      appToken: config.slackAppToken,
+    });
+  }
+  // HTTP Mode (para produção com webhook)
+  else {
+    logger.info('🌐 Iniciando app em HTTP Mode');
+
+    const receiver = new ExpressReceiver({
+      signingSecret: config.slackSigningSecret,
+    });
+
+    app = new App({
+      ...baseConfig,
+      receiver,
+    });
+
+    // Expõe o servidor Express
+    const server = receiver.app;
+
+    // Health check endpoint
+    server.get('/health', (_req, res) => {
+      res.status(200).json({
+        status: 'ok',
+        service: 'bot-beneficios-alcina-maria',
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    logger.info(`✅ Health check endpoint disponível em http://localhost:${config.port}/health`);
+  }
+
+  // Registra handlers
+  registerEventHandlers(app);
+  registerCommandHandlers(app);
+  registerActionHandlers(app);
+
+  // Tratamento global de erros
+  app.error(async (error) => {
+    logger.error('❌ Erro global capturado:', error);
+  });
+
+  return app;
+}
+
+/**
+ * Inicia a aplicação Slack
+ */
+export async function startSlackApp(app: App): Promise<void> {
+  try {
+    const port = config.appMode === 'http' ? config.port : undefined;
+
+    await app.start(port);
+
+    if (config.appMode === 'socket') {
+      logger.info('⚡ Bot em Socket Mode está rodando!');
+    } else {
+      logger.info(`⚡ Bot em HTTP Mode está rodando na porta ${port}!`);
+    }
+
+    logger.info(`📢 Monitorando canal: ${config.welcomeChannelId}`);
+    logger.info(`📨 Envio de DM: ${config.sendDm ? 'ativado' : 'desativado'}`);
+
+    // Inicia limpeza automática de cache (a cada 1 hora)
+    startCacheCleanup(60);
+
+    logger.info('✅ Bot de Benefícios Alcina Maria pronto para uso!');
+    logger.info('💡 Use /beneficios para testar');
+  } catch (error) {
+    logger.error('❌ Erro ao iniciar aplicação:', error);
+    throw error;
+  }
+}
+
+/**
+ * Graceful shutdown
+ */
+export async function stopSlackApp(app: App): Promise<void> {
+  try {
+    await app.stop();
+    logger.info('👋 Bot encerrado com sucesso');
+  } catch (error) {
+    logger.error('❌ Erro ao encerrar aplicação:', error);
+    throw error;
+  }
+}
