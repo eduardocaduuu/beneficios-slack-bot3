@@ -7,14 +7,13 @@ import { logger, logSlackEvent, logError } from '../utils/logger';
 import {
   buildBenefitsMessageForTeam,
   buildWelcomeMessageForNewbie,
-  buildDetailedBenefitsMessage,
   buildUnitSelectorMessage,
   buildBenefitsForUnitMessage,
 } from '../utils/messageBuilders';
 import { parseUnit } from '../utils/unitFilter';
 import { Unit } from '../types';
 import { config } from '../config/environment';
-import { getBroadcastPreview, executeBroadcast } from '../services/broadcastService';
+import { getBroadcastPreview } from '../services/broadcastService';
 
 /**
  * Registra handlers de comandos slash

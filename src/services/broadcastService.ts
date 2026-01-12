@@ -98,7 +98,6 @@ export async function getBroadcastPreview(
 
   const totalMembers = members.length;
   const bots = members.filter((m) => m.isBot).length;
-  const deleted = members.filter((m) => m.isDeleted).length;
 
   // Filtra: remove bots e usuários deletados
   const activeUsers = members.filter((m) => !m.isBot && !m.isDeleted).map((m) => m.userId);

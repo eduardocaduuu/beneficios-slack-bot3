@@ -4,7 +4,7 @@
  */
 
 import { Block, KnownBlock } from '@slack/bolt';
-import { Benefit, Unit, UNIT_LABELS, CATEGORY_LABELS } from '../types';
+import { Unit, UNIT_LABELS, CATEGORY_LABELS } from '../types';
 import { config } from '../config/environment';
 import {
   filterBenefitsByUnit,

@@ -7,6 +7,7 @@ import { config } from '../config/environment';
 import { logger, logSlackEvent, logError } from '../utils/logger';
 import { canSendMessage, markMessageSent } from '../services/cacheService';
 import { buildWelcomeMessageForNewbie } from '../utils/messageBuilders';
+import { sendDm } from '../services/slackMessaging';
 
 /**
  * Registra handlers de eventos
@@ -69,7 +70,7 @@ export function registerEventHandlers(app: App) {
   });
 
   // Evento: app mencionada
-  app.event('app_mention', async ({ event, client, say }) => {
+  app.event('app_mention', async ({ event, say }) => {
     try {
       logSlackEvent('app_mention', {
         user: event.user,

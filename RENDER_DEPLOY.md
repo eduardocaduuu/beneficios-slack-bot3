@@ -24,7 +24,7 @@ Este guia explica como fazer o deploy do Bot de Benefícios no Render.
 - **Name**: `bot-beneficios-alcina-maria`
 - **Region**: `Sao Paulo` (ou a região mais próxima)
 - **Branch**: `main`
-- **Root Directory**: `BotBeneficios` (se o repositório tiver subdiretório)
+- **Root Directory**: `BotBeneficios` ⚠️ **IMPORTANTE**: NÃO use `dist`! O `dist` é criado durante o build. Use `BotBeneficios` ou deixe vazio se o repositório já estiver na raiz.
 
 #### Configurações de Build:
 - **Environment**: `Node`

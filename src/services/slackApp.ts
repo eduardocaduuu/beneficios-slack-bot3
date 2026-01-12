@@ -117,14 +117,16 @@ export function createSlackApp(): App {
  */
 export async function startSlackApp(app: App): Promise<void> {
   try {
-    const port = config.appMode === 'http' ? config.port : undefined;
-
-    await app.start(port);
+    if (config.appMode === 'http') {
+      await app.start(config.port);
+    } else {
+      await app.start();
+    }
 
     if (config.appMode === 'socket') {
       logger.info('⚡ Bot em Socket Mode está rodando!');
     } else {
-      logger.info(`⚡ Bot em HTTP Mode está rodando na porta ${port}!`);
+      logger.info(`⚡ Bot em HTTP Mode está rodando na porta ${config.port}!`);
     }
 
     logger.info(`📢 Monitorando canal: ${config.welcomeChannelId}`);
