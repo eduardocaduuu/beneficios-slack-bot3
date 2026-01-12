@@ -117,24 +117,49 @@ export function registerActionHandlers(app: App) {
   });
 
   // Ação: Cancelar broadcast
-  app.action('broadcast_cancel', async ({ ack, respond }) => {
+  app.action('cancel_broadcast', async ({ ack, respond, body, client }) => {
     await ack();
 
     try {
+      const userId = body.user.id;
+      
+      // Tenta obter channelId do value do botão, ou usa um fallback
+      let channelId: string | undefined;
+      if ('actions' in body && body.actions && body.actions.length > 0) {
+        const action = body.actions[0];
+        if ('value' in action && action.value) {
+          channelId = action.value;
+        }
+      }
+
       await respond({
         response_type: 'ephemeral',
         replace_original: true,
         text: '❌ Broadcast cancelado. Nenhuma mensagem foi enviada.',
       });
 
-      logger.info('✅ Broadcast cancelado pelo usuário');
+      // Envia mensagem ephemeral no canal se possível
+      if (channelId) {
+        try {
+          await client.chat.postEphemeral({
+            channel: channelId,
+            user: userId,
+            text: '❌ Broadcast cancelado. Nenhuma mensagem foi enviada.',
+          });
+        } catch (ephemeralError) {
+          // Ignora erro se não conseguir enviar ephemeral
+          logger.debug('Não foi possível enviar mensagem ephemeral de cancelamento');
+        }
+      }
+
+      logger.info(`✅ Broadcast cancelado pelo usuário ${userId}`);
     } catch (error) {
-      logError('Erro ao processar broadcast_cancel', error);
+      logError('Erro ao processar cancel_broadcast', error);
     }
   });
 
   // Ação: Confirmar e executar broadcast
-  app.action('broadcast_confirm', async ({ ack, respond, body, client }) => {
+  app.action('confirm_broadcast', async ({ ack, respond, body, client }) => {
     await ack();
 
     try {

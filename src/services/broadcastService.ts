@@ -89,32 +89,47 @@ if (memberIds.length === 0) {
 
 /**
  * Gera prévia do broadcast (quem vai receber)
+ * Com fallback seguro caso não consiga listar membros
  */
 export async function getBroadcastPreview(
   client: WebClient,
   channelId: string
 ): Promise<BroadcastPreview> {
-  const members = await getChannelMembers(client, channelId);
+  try {
+    const members = await getChannelMembers(client, channelId);
 
-  const totalMembers = members.length;
-  const bots = members.filter((m) => m.isBot).length;
+    const totalMembers = members.length;
+    const bots = members.filter((m) => m.isBot).length;
 
-  // Filtra: remove bots e usuários deletados
-  const activeUsers = members.filter((m) => !m.isBot && !m.isDeleted).map((m) => m.userId);
+    // Filtra: remove bots e usuários deletados
+    const activeUsers = members.filter((m) => !m.isBot && !m.isDeleted).map((m) => m.userId);
 
-  // Verifica cache: quem já recebeu mensagem
-  const alreadySent = activeUsers.filter((userId) => !canSendMessage(userId, 'welcome')).length;
+    // Verifica cache: quem já recebeu mensagem
+    const alreadySent = activeUsers.filter((userId) => !canSendMessage(userId, 'welcome')).length;
 
-  // Quem vai receber: usuários ativos que não estão no cache
-  const willReceiveUsers = activeUsers.filter((userId) => canSendMessage(userId, 'welcome'));
+    // Quem vai receber: usuários ativos que não estão no cache
+    const willReceiveUsers = activeUsers.filter((userId) => canSendMessage(userId, 'welcome'));
 
-  return {
-    totalMembers,
-    bots,
-    alreadySent,
-    willReceive: willReceiveUsers.length,
-    users: willReceiveUsers,
-  };
+    return {
+      totalMembers,
+      bots,
+      alreadySent,
+      willReceive: willReceiveUsers.length,
+      users: willReceiveUsers,
+    };
+  } catch (error: any) {
+    // Fallback seguro: se não conseguir listar membros (ex: missing_scope, permissão negada)
+    logger.warn('⚠️ Erro ao listar membros do canal, usando fallback seguro:', error);
+    
+    // Retorna preview com valores seguros (permite exibir botões mesmo sem dados)
+    return {
+      totalMembers: 0,
+      bots: 0,
+      alreadySent: 0,
+      willReceive: 0,
+      users: [],
+    };
+  }
 }
 
 /**

@@ -166,8 +166,14 @@ export function registerCommandHandlers(app: App) {
         text: '⏳ Analisando membros do canal...',
       });
 
-      // Gera prévia
+      // Gera prévia (com fallback seguro)
       const preview = await getBroadcastPreview(client, config.welcomeChannelId);
+
+      // Verifica se conseguiu listar membros (fallback seguro)
+      const hasData = preview.totalMembers > 0 || preview.willReceive > 0;
+      const errorMessage = !hasData && preview.totalMembers === 0 && preview.willReceive === 0
+        ? '\n\n⚠️ *Não foi possível listar membros do canal.*\nVerifique se o bot tem as permissões necessárias (`channels:read`, `channels:history`).'
+        : '';
 
       // Mostra prévia com botões de confirmação
       await respond({
@@ -185,7 +191,7 @@ export function registerCommandHandlers(app: App) {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*Análise do canal <#${config.welcomeChannelId}>:*`,
+              text: `*Análise do canal <#${config.welcomeChannelId}>:*${errorMessage}`,
             },
           },
           {
@@ -193,7 +199,7 @@ export function registerCommandHandlers(app: App) {
             fields: [
               {
                 type: 'mrkdwn',
-                text: `👥 *Total de membros:*\n${preview.totalMembers}`,
+                text: `👥 *Total de membros:*\n${preview.totalMembers > 0 ? preview.totalMembers : 'N/D'}`,
               },
               {
                 type: 'mrkdwn',
@@ -219,45 +225,43 @@ export function registerCommandHandlers(app: App) {
               text:
                 preview.willReceive > 0
                   ? `⚠️ *${preview.willReceive} pessoas* receberão uma mensagem direta do bot.\n\n*Importante:*\n• Envio controlado: 1 mensagem/segundo\n• Tempo estimado: ~${Math.ceil(preview.willReceive / 60)} minuto(s)\n• Não envia para bots ou quem já recebeu\n• Registra erros para análise`
-                  : '✅ *Nenhuma mensagem será enviada.*\n\nTodos os membros ativos já receberam a mensagem ou são bots.',
+                  : hasData
+                  ? '✅ *Nenhuma mensagem será enviada.*\n\nTodos os membros ativos já receberam a mensagem ou são bots.'
+                  : '⚠️ *Não foi possível analisar o canal.*\nVerifique as permissões do bot antes de confirmar.',
             },
           },
-          ...(preview.willReceive > 0
-            ? [
-                {
-                  type: 'actions' as const,
-                  elements: [
-                    {
-                      type: 'button' as const,
-                      text: {
-                        type: 'plain_text' as const,
-                        text: '✅ Confirmar e Enviar',
-                        emoji: true,
-                      },
-                      style: 'primary' as const,
-                      action_id: 'broadcast_confirm',
-                      value: config.welcomeChannelId,
-                    },
-                    {
-                      type: 'button' as const,
-                      text: {
-                        type: 'plain_text' as const,
-                        text: '❌ Cancelar',
-                        emoji: true,
-                      },
-                      style: 'danger' as const,
-                      action_id: 'broadcast_cancel',
-                    },
-                  ],
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: '✅ Sim, enviar',
+                  emoji: true,
                 },
-              ]
-            : []),
+                style: 'primary',
+                action_id: 'confirm_broadcast',
+                value: config.welcomeChannelId,
+              },
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: '❌ Não, cancelar',
+                  emoji: true,
+                },
+                style: 'danger',
+                action_id: 'cancel_broadcast',
+              },
+            ],
+          },
           {
             type: 'context',
             elements: [
               {
                 type: 'mrkdwn',
-                text: '💡 _Esta ação não pode ser desfeita. Certifique-se de que está pronto antes de confirmar._',
+                text: '⚠️ _Esta ação não pode ser desfeita. Confirme antes de enviar._',
               },
             ],
           },
