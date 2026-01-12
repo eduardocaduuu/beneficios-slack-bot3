@@ -3,12 +3,46 @@
  */
 
 import { App, ExpressReceiver, LogLevel } from '@slack/bolt';
+import * as http from 'http';
 import { config } from '../config/environment';
 import { logger } from '../utils/logger';
 import { registerEventHandlers } from '../handlers/events';
 import { registerCommandHandlers } from '../handlers/commands';
 import { registerActionHandlers } from '../handlers/actions';
 import { startCacheCleanup } from './cacheService';
+
+// Servidor HTTP para health check (usado em Socket Mode para Render)
+let healthCheckServer: http.Server | null = null;
+
+/**
+ * Inicia servidor HTTP mínimo para health check (necessário para Render em Socket Mode)
+ */
+function startHealthCheckServer(port: number): void {
+  if (healthCheckServer) {
+    return; // Já está rodando
+  }
+
+  healthCheckServer = http.createServer((req, res) => {
+    if (req.url === '/health' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          status: 'ok',
+          service: 'bot-beneficios-alcina-maria',
+          mode: 'socket',
+          timestamp: new Date().toISOString(),
+        })
+      );
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not Found' }));
+    }
+  });
+
+  healthCheckServer.listen(port, () => {
+    logger.info(`✅ Health check endpoint disponível em http://localhost:${port}/health`);
+  });
+}
 
 /**
  * Cria e configura a aplicação Slack
@@ -32,6 +66,9 @@ export function createSlackApp(): App {
       socketMode: true,
       appToken: config.slackAppToken,
     });
+
+    // Inicia servidor HTTP mínimo para health check (necessário para Render)
+    startHealthCheckServer(config.port);
   }
   // HTTP Mode (para produção com webhook)
   else {
@@ -54,6 +91,7 @@ export function createSlackApp(): App {
       res.status(200).json({
         status: 'ok',
         service: 'bot-beneficios-alcina-maria',
+        mode: 'http',
         timestamp: new Date().toISOString(),
       });
     });
@@ -109,6 +147,23 @@ export async function startSlackApp(app: App): Promise<void> {
 export async function stopSlackApp(app: App): Promise<void> {
   try {
     await app.stop();
+    
+    // Fecha servidor HTTP de health check se estiver rodando
+    if (healthCheckServer) {
+      await new Promise<void>((resolve, reject) => {
+        healthCheckServer!.close((err) => {
+          if (err) {
+            logger.error('❌ Erro ao fechar servidor de health check:', err);
+            reject(err);
+          } else {
+            healthCheckServer = null;
+            logger.info('👋 Servidor de health check encerrado');
+            resolve();
+          }
+        });
+      });
+    }
+    
     logger.info('👋 Bot encerrado com sucesso');
   } catch (error) {
     logger.error('❌ Erro ao encerrar aplicação:', error);

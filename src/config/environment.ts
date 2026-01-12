@@ -83,8 +83,8 @@ export function loadConfig(): AppConfig {
     return config;
   } catch (error) {
     logger.error('❌ Erro ao carregar configuração:', error);
-    logger.error('\n📋 Certifique-se de que o arquivo .env está configurado corretamente.');
-    logger.error('💡 Veja o arquivo .env.example para referência.\n');
+    logger.error('\n📋 Certifique-se de que as variáveis de ambiente estão configuradas.');
+    logger.error('💡 Configure as variáveis no ambiente de execução (Render, Heroku, etc.) ou via arquivo .env local.\n');
     throw error;
   }
 }
