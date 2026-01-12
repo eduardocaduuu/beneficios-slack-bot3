@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: bot-beneficios-alcina-maria
+    env: node
+    region: sao-paulo
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_MODE
+        value: socket
+      - key: PORT
+        value: 3000
+      - key: LOG_LEVEL
+        value: info
+      # Configure estas variáveis no painel do Render:
+      # - SLACK_BOT_TOKEN
+      # - SLACK_APP_TOKEN
+      # - SLACK_SIGNING_SECRET
+      # - WELCOME_CHANNEL_ID
