@@ -8,8 +8,9 @@ import {
   buildDetailedBenefitsMessage,
   buildUnitSelectorMessage,
   buildBenefitsForUnitMessage,
+  buildErrorMessage,
 } from '../utils/messageBuilders';
-import { Unit } from '../types';
+import { Unit, UNIT_LABELS } from '../types';
 import { getBroadcastPreview, executeBroadcast } from '../services/broadcastService';
 
 /**
@@ -99,20 +100,41 @@ export function registerActionHandlers(app: App) {
         unit: selectedUnit,
       });
 
+      // Valida se a unidade existe
+      if (!UNIT_LABELS[selectedUnit]) {
+        logger.error(`Unidade inválida: ${selectedUnit}`);
+        await respond({
+          response_type: 'ephemeral',
+          replace_original: true,
+          text: `❌ Unidade "${selectedUnit}" não encontrada.`,
+        });
+        return;
+      }
+
+      // Constrói a mensagem
+      const blocks = buildBenefitsForUnitMessage(selectedUnit);
+      
       await respond({
         response_type: 'ephemeral',
         replace_original: true,
-        blocks: buildBenefitsForUnitMessage(selectedUnit),
-        text: `Benefícios para ${selectedUnit}`,
+        blocks,
+        text: `Benefícios para ${UNIT_LABELS[selectedUnit]}`,
       });
 
-      logger.info(`✅ Benefícios da unidade ${selectedUnit} enviados para ${userId}`);
+      logger.info(`✅ Benefícios da unidade ${selectedUnit} (${UNIT_LABELS[selectedUnit]}) enviados para ${userId}`);
     } catch (error) {
-      logError('Erro ao processar unit_select', error, { body });
-      await respond({
-        response_type: 'ephemeral',
-        text: '❌ Erro ao carregar benefícios. Tente novamente.',
-      });
+      logError('Erro ao processar unit_select', error, { body, selectedUnit: (body as any).actions?.[0]?.selected_option?.value });
+      
+      try {
+        await respond({
+          response_type: 'ephemeral',
+          replace_original: true,
+          text: '❌ Erro ao carregar benefícios. Tente novamente ou entre em contato com o RH/DP.',
+          blocks: buildErrorMessage('Erro ao carregar benefícios da unidade selecionada.'),
+        });
+      } catch (respondError) {
+        logger.error('Erro ao enviar mensagem de erro:', respondError);
+      }
     }
   });
 

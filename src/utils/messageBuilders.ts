@@ -412,6 +412,20 @@ export function buildUnitSelectorMessage(): (Block | KnownBlock)[] {
  * Mensagem com benefícios filtrados por unidade
  */
 export function buildBenefitsForUnitMessage(unit: Unit): (Block | KnownBlock)[] {
+  // Valida se a unidade existe
+  if (!UNIT_LABELS[unit]) {
+    logger.error(`Unidade inválida ao construir mensagem: ${unit}`);
+    return [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `❌ Erro: Unidade "${unit}" não encontrada.`,
+        },
+      },
+    ];
+  }
+
   const benefits = filterBenefitsByUnit(unit);
   const grouped = groupBenefitsByCategory(benefits);
   const sorted = sortBenefitCategories(grouped);
