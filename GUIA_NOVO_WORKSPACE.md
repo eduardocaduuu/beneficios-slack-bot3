@@ -1,6 +1,6 @@
-# 🚀 Guia: Adicionar Bot a um Novo Workspace do Slack
+# 🚀 Guia: Migrar Bot para um Novo Workspace do Slack
 
-Este guia explica como configurar o bot em um novo workspace do Slack.
+Este guia explica como migrar o bot de um workspace para outro (substituindo o antigo).
 
 ## 📋 Pré-requisitos
 
@@ -87,32 +87,23 @@ Este guia explica como configurar o bot em um novo workspace do Slack.
    - **Usage Hint**: `[unidade]` (opcional)
 4. Clique em **"Save"**
 
-## 🌐 Passo 7: Atualizar Render
+## 🌐 Passo 7: Atualizar Render (Substituir Workspace Antigo)
 
-Você tem duas opções:
-
-### Opção A: Atualizar Serviço Existente (Recomendado)
-
-1. No painel do Render, abra seu serviço
+1. No painel do Render, abra seu serviço existente
 2. Vá em **"Environment"**
-3. **Atualize** as seguintes variáveis com os novos valores:
+3. **Substitua** as seguintes variáveis com os novos valores do novo workspace:
 
 ```
-SLACK_BOT_TOKEN = xoxb-novo-token-aqui
-SLACK_APP_TOKEN = xapp-novo-token-aqui
-SLACK_SIGNING_SECRET = novo-signing-secret-aqui
-WELCOME_CHANNEL_ID = C0A7G2YCNKG (novo canal)
+SLACK_BOT_TOKEN = xoxb-novo-token-aqui (do novo workspace)
+SLACK_APP_TOKEN = xapp-novo-token-aqui (do novo workspace)
+SLACK_SIGNING_SECRET = novo-signing-secret-aqui (do novo workspace)
+WELCOME_CHANNEL_ID = C1234567890 (canal do novo workspace)
 ```
 
-4. Clique em **"Save Changes"**
-5. O Render fará deploy automaticamente
-
-### Opção B: Criar Novo Serviço (Para manter ambos)
-
-1. No Render, crie um novo Web Service
-2. Use o mesmo repositório
-3. Configure as variáveis de ambiente com os novos tokens
-4. Isso permite ter o bot rodando em ambos os workspaces
+4. ⚠️ **IMPORTANTE**: Substitua TODOS os valores antigos pelos novos
+5. Clique em **"Save Changes"**
+6. O Render fará deploy automaticamente
+7. O bot agora estará conectado ao novo workspace (o antigo será desconectado)
 
 ## ✅ Passo 8: Verificar Funcionamento
 
@@ -142,8 +133,10 @@ Após seguir os passos acima, você terá:
 
 - Cada workspace precisa de sua própria Slack App
 - Tokens são únicos por workspace
-- Não compartilhe tokens entre workspaces
+- Ao atualizar as variáveis no Render, o bot será desconectado do workspace antigo
+- O bot funcionará apenas no novo workspace após a atualização
 - Mantenha os tokens seguros e não os versione no Git
+- Você pode desinstalar a Slack App antiga se não for mais usar aquele workspace
 
 ## 🆘 Troubleshooting
 
