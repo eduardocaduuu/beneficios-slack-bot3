@@ -5,7 +5,6 @@
 
 import { Block, KnownBlock } from '@slack/bolt';
 import { Unit, UNIT_LABELS, CATEGORY_LABELS } from '../types';
-import { config } from '../config/environment';
 import { logger } from './logger';
 import {
   filterBenefitsByUnit,
