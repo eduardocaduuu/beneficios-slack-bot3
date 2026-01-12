@@ -56,6 +56,7 @@ export const benefits: Benefit[] = [
       'vd_penedo',
       'vd_palmeira',
     ],
+    details: 'Mensalidade com desconto em folha de pagamento',
     howToRequest: 'Entre em contato com o RH/DP para saber como solicitar',
   },
   {
@@ -191,8 +192,16 @@ export const benefits: Benefit[] = [
     title: 'Convênio Farmácia Permanente',
     description: 'Compras com desconto em folha e possibilidade de parcelamento',
     category: 'alimentacao',
-    units: ['penedo', 'vd_penedo'],
-    details: 'Disponível apenas para unidades de Penedo',
+    units: [
+      'todas',
+      'penedo',
+      'palmeira',
+      'loja_coruripe',
+      'loja_teotonio',
+      'vd_penedo',
+      'vd_palmeira',
+    ],
+    details: 'Disponível em todas as cidades que têm a farmácia permanente, inclusive pode ser usado em Maceió, Arapiraca e fora do Estado. Pode ser usado em qualquer farmácia Permanente do país.',
   },
 ];
 
