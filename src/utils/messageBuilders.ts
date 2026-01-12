@@ -112,7 +112,7 @@ export function buildWelcomeMessageForNewbie(userId: string): (Block | KnownBloc
           type: 'button',
           text: {
             type: 'plain_text',
-            text: '📞 Falar com RH/DP',
+            text: '📞 Falar com RH / DP',
             emoji: true,
           },
           action_id: 'contact_rh',
@@ -227,7 +227,7 @@ export function buildBenefitsMessageForTeam(userId?: string): (Block | KnownBloc
           type: 'button',
           text: {
             type: 'plain_text',
-            text: '📞 Falar com RH/DP',
+            text: '📞 Falar com RH / DP',
             emoji: true,
           },
           action_id: 'contact_rh',
@@ -538,7 +538,7 @@ export function buildErrorMessage(errorMessage: string): (Block | KnownBlock)[] 
           type: 'button',
           text: {
             type: 'plain_text',
-            text: '📞 Falar com RH/DP',
+            text: '📞 Falar com RH / DP',
             emoji: true,
           },
           action_id: 'contact_rh',
