@@ -38,6 +38,7 @@ export interface AppConfig {
   sendDm: boolean;
   defaultLocale: string;
   rhContactLink: string;
+  rhUserId?: string;
   appMode: 'socket' | 'http';
   port: number;
   logLevel: string;

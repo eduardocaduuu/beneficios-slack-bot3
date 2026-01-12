@@ -11,6 +11,7 @@ import {
   buildErrorMessage,
 } from '../utils/messageBuilders';
 import { Unit, UNIT_LABELS } from '../types';
+import { config } from '../config/environment';
 import { getBroadcastPreview, executeBroadcast } from '../services/broadcastService';
 
 /**
@@ -317,6 +318,83 @@ export function registerActionHandlers(app: App) {
         replace_original: true,
         text: '❌ Erro ao executar broadcast. Verifique os logs para detalhes.',
       });
+    }
+  });
+
+  // Ação: Contatar RH/DP
+  app.action('contact_rh', async ({ ack, body, client }) => {
+    await ack();
+
+    try {
+      const rhUserId = process.env.RH_USER_ID || config.rhUserId;
+      const requesterId = body.user.id;
+      const channelId = (body as any).channel?.id;
+
+      if (!rhUserId) {
+        logger.error('RH_USER_ID não configurado no ambiente');
+        await client.chat.postEphemeral({
+          channel: channelId || requesterId,
+          user: requesterId,
+          text: '❌ Contato do RH/DP não está configurado. Fale com o administrador do bot.',
+        });
+        return;
+      }
+
+      logSlackEvent('action_contact_rh', {
+        user: requesterId,
+        rhUserId,
+      });
+
+      // 1) Abrir DM com o RH
+      const openRes = await client.conversations.open({
+        users: rhUserId,
+      });
+
+      const dmChannelId = openRes.channel?.id;
+
+      if (!dmChannelId) {
+        throw new Error('Não foi possível abrir DM com o RH');
+      }
+
+      // 2) Notificar o RH
+      await client.chat.postMessage({
+        channel: dmChannelId,
+        text: `👋 Olá! O usuário <@${requesterId}> clicou em *Falar com RH/DP* no bot de benefícios e solicitou contato.`,
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `👋 *Nova solicitação de contato*\n\nO usuário <@${requesterId}> clicou no botão *Falar com RH/DP* no bot de benefícios e solicitou contato.`,
+            },
+          },
+        ],
+      });
+
+      // 3) Confirmar para o usuário
+      await client.chat.postEphemeral({
+        channel: channelId || dmChannelId,
+        user: requesterId,
+        text: '✅ Pronto! O RH/DP já foi notificado e entrará em contato com você em breve.',
+      });
+
+      logger.info(`✅ RH notificado sobre solicitação de contato de ${requesterId}`);
+    } catch (error) {
+      logError('Erro ao acionar RH', error, { body });
+
+      // Fallback: tenta responder no canal do clique
+      const requesterId = body.user.id;
+      const channelId = (body as any).channel?.id;
+
+      try {
+        await client.chat.postEphemeral({
+          channel: channelId || requesterId,
+          user: requesterId,
+          text: '❌ Não foi possível acionar o RH agora. Tente novamente mais tarde ou entre em contato diretamente.',
+        });
+      } catch (respondError) {
+        logger.error('Erro ao enviar mensagem de erro ao usuário:', respondError);
+      }
     }
   });
 

@@ -215,6 +215,7 @@ WELCOME_CHANNEL_ID=C1234567890
 SEND_DM=true
 DEFAULT_LOCALE=pt-BR
 RH_CONTACT_LINK=https://slack.com/app_redirect?channel=rh-dp
+RH_USER_ID=U1234567890
 
 # Modo (socket ou http)
 APP_MODE=socket
@@ -233,7 +234,8 @@ NODE_ENV=development
 | `SLACK_SIGNING_SECRET` | Secret para validar requests | `abc123def456...` |
 | `WELCOME_CHANNEL_ID` | ID do canal a monitorar | `C1234567890` |
 | `SEND_DM` | Enviar DM para novos membros? | `true` ou `false` |
-| `RH_CONTACT_LINK` | Link para contato do RH | URL ou canal do Slack |
+| `RH_CONTACT_LINK` | Link para contato do RH (legado) | URL ou canal do Slack |
+| `RH_USER_ID` | User ID do RH/DP para botão interativo | `U1234567890` |
 | `APP_MODE` | Modo de conexão | `socket` (dev) ou `http` (prod) |
 | `LOG_LEVEL` | Nível de log | `info`, `debug`, `error` |
 

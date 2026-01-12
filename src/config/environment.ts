@@ -47,6 +47,7 @@ export function loadConfig(): AppConfig {
       sendDm: parseBoolean(getEnv('SEND_DM', 'true')),
       defaultLocale: getEnv('DEFAULT_LOCALE', 'pt-BR'),
       rhContactLink: getEnv('RH_CONTACT_LINK', 'https://slack.com/app_redirect?channel=rh-dp'),
+      rhUserId: getEnv('RH_USER_ID', ''),
       appMode: (getEnv('APP_MODE', 'socket') as 'socket' | 'http'),
       port: parseInt(getEnv('PORT', process.env.PORT || '3000'), 10),
       logLevel: getEnv('LOG_LEVEL', 'info'),
