@@ -63,22 +63,55 @@ if (memberIds.length === 0) {
 
     logger.info(`📊 Encontrados ${memberIds.length} membros no canal`);
 
-    // Busca informações detalhadas de cada membro
-    const members = await Promise.all(
-      memberIds.map(async (userId) => {
-        try {
-          const userInfo = await withRateLimitRetry(() => client.users.info({ user: userId }), { actionName: 'users.info' });
-          return {
-            userId,
-            isBot: userInfo.user?.is_bot || false,
-            isDeleted: userInfo.user?.deleted || false,
-          };
-        } catch (error) {
-          logger.warn(`⚠️ Erro ao buscar info do usuário ${userId}:`, error);
-          return { userId, isBot: false, isDeleted: true };
-        }
-      })
-    );
+    // Busca informações detalhadas de cada membro em batches para evitar rate limiting
+    const members: { userId: string; isBot: boolean; isDeleted: boolean }[] = [];
+    const batchSize = 10; // Processa 10 usuários por vez
+    const delayBetweenBatches = 200; // 200ms entre batches
+
+    for (let i = 0; i < memberIds.length; i += batchSize) {
+      const batch = memberIds.slice(i, i + batchSize);
+      
+      const batchResults = await Promise.all(
+        batch.map(async (userId) => {
+          try {
+            const userInfo = await withRateLimitRetry(
+              () => client.users.info({ user: userId }),
+              { actionName: 'users.info', maxRetries: 2 }
+            );
+            return {
+              userId,
+              isBot: userInfo.user?.is_bot || false,
+              isDeleted: userInfo.user?.deleted || false,
+            };
+          } catch (error: any) {
+            // Log mais detalhado do erro
+            const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
+            const errorCode = error?.code || error?.data?.error || 'unknown';
+            
+            // Trata erros específicos
+            if (errorCode === 'user_not_found' || errorCode === 'users_not_found') {
+              logger.debug(`👤 Usuário ${userId} não encontrado (provavelmente deletado)`);
+            } else if (errorCode === 'missing_scope') {
+              logger.warn(`⚠️ Sem permissão para buscar info do usuário ${userId}: ${errorMessage}`);
+            } else {
+              logger.warn(`⚠️ Erro ao buscar info do usuário ${userId} (${errorCode}): ${errorMessage}`);
+            }
+            
+            // Retorna como deletado para ser filtrado
+            return { userId, isBot: false, isDeleted: true };
+          }
+        })
+      );
+
+      members.push(...batchResults);
+
+      // Delay entre batches (exceto no último)
+      if (i + batchSize < memberIds.length) {
+        await delay(delayBetweenBatches);
+      }
+    }
+
+    logger.info(`✅ Processados ${members.length} membros (${members.filter(m => !m.isDeleted).length} ativos)`);
 
     return members;
   } catch (error) {
