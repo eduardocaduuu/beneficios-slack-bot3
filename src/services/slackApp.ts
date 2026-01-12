@@ -39,8 +39,16 @@ function startHealthCheckServer(port: number): void {
     }
   });
 
-  healthCheckServer.listen(port, () => {
-    logger.info(`✅ Health check endpoint disponível em http://localhost:${port}/health`);
+  healthCheckServer.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      logger.warn(`⚠️ Porta ${port} já está em uso. Health check pode não estar disponível.`);
+    } else {
+      logger.error('❌ Erro ao iniciar servidor de health check:', err);
+    }
+  });
+
+  healthCheckServer.listen(port, '0.0.0.0', () => {
+    logger.info(`✅ Health check endpoint disponível em http://0.0.0.0:${port}/health`);
   });
 }
 

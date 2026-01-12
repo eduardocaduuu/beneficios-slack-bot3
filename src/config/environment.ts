@@ -48,7 +48,7 @@ export function loadConfig(): AppConfig {
       defaultLocale: getEnv('DEFAULT_LOCALE', 'pt-BR'),
       rhContactLink: getEnv('RH_CONTACT_LINK', 'https://slack.com/app_redirect?channel=rh-dp'),
       appMode: (getEnv('APP_MODE', 'socket') as 'socket' | 'http'),
-      port: parseInt(getEnv('PORT', '3000'), 10),
+      port: parseInt(getEnv('PORT', process.env.PORT || '3000'), 10),
       logLevel: getEnv('LOG_LEVEL', 'info'),
       nodeEnv: getEnv('NODE_ENV', 'development'),
     };
@@ -82,9 +82,19 @@ export function loadConfig(): AppConfig {
 
     return config;
   } catch (error) {
-    logger.error('❌ Erro ao carregar configuração:', error);
-    logger.error('\n📋 Certifique-se de que as variáveis de ambiente estão configuradas.');
-    logger.error('💡 Configure as variáveis no ambiente de execução (Render, Heroku, etc.) ou via arquivo .env local.\n');
+    // Tenta logar o erro, mas se o logger falhar, usa console.error
+    try {
+      logger.error('❌ Erro ao carregar configuração:', error);
+      logger.error('\n📋 Certifique-se de que as variáveis de ambiente estão configuradas.');
+      logger.error('💡 Configure as variáveis no ambiente de execução (Render, Heroku, etc.) ou via arquivo .env local.\n');
+    } catch {
+      console.error('❌ Erro ao carregar configuração:', error);
+      console.error('\n📋 Variáveis de ambiente obrigatórias:');
+      console.error('  - SLACK_BOT_TOKEN');
+      console.error('  - SLACK_APP_TOKEN');
+      console.error('  - SLACK_SIGNING_SECRET');
+      console.error('  - WELCOME_CHANNEL_ID\n');
+    }
     throw error;
   }
 }

@@ -62,8 +62,17 @@ async function main() {
       }
     });
   } catch (error) {
-    logger.error('❌ Erro fatal ao iniciar aplicação:', error);
-    process.exit(1);
+    // Tenta logar o erro, mas se o logger falhar, usa console.error
+    try {
+      logger.error('❌ Erro fatal ao iniciar aplicação:', error);
+    } catch {
+      console.error('❌ Erro fatal ao iniciar aplicação:', error);
+    }
+    
+    // Aguarda um pouco para garantir que os logs sejam escritos
+    setTimeout(() => {
+      process.exit(1);
+    }, 1000);
   }
 }
 
