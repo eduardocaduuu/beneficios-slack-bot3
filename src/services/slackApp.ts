@@ -23,19 +23,12 @@ function startHealthCheckServer(port: number): void {
   }
 
   healthCheckServer = http.createServer((req, res) => {
-    if (req.url === '/health' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          status: 'ok',
-          service: 'bot-beneficios-alcina-maria',
-          mode: 'socket',
-          timestamp: new Date().toISOString(),
-        })
-      );
+    if (req.url === '/health') {
+      res.writeHead(200);
+      res.end();
     } else {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not Found' }));
+      res.writeHead(404);
+      res.end();
     }
   });
 
@@ -94,14 +87,9 @@ export function createSlackApp(): App {
     // Expõe o servidor Express
     const server = receiver.app;
 
-    // Health check endpoint
-    server.get('/health', (_req, res) => {
-      res.status(200).json({
-        status: 'ok',
-        service: 'bot-beneficios-alcina-maria',
-        mode: 'http',
-        timestamp: new Date().toISOString(),
-      });
+    // Health check endpoint (supports GET, HEAD, etc. for UptimeRobot compatibility)
+    server.all('/health', (_req, res) => {
+      res.status(200).end();
     });
 
     logger.info(`✅ Health check endpoint disponível em http://localhost:${config.port}/health`);
